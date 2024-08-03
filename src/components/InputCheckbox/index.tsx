@@ -1,8 +1,8 @@
 import classNames from "classnames"
-import { useRef } from "react"
+import { useRef} from "react"
 import { InputCheckboxComponent } from "./types"
 
-export const InputCheckbox: InputCheckboxComponent = ({ id, checked = false, disabled, onChange }) => {
+export const InputCheckbox: InputCheckboxComponent = ({ id, checked, disabled, onChange }) => {
   const { current: inputId } = useRef(`RampInputCheckbox-${id}`)
 
   return (
@@ -12,15 +12,18 @@ export const InputCheckbox: InputCheckboxComponent = ({ id, checked = false, dis
           "RampInputCheckbox--label-checked": checked,
           "RampInputCheckbox--label-disabled": disabled,
         })}
-      />
+       >
       <input
         id={inputId}
         type="checkbox"
         className="RampInputCheckbox--input"
         checked={checked}
         disabled={disabled}
-        onChange={() => onChange(!checked)}
-      />
+        onChange={() =>{
+          // console.log(`Checkbox toggled for ${id} to ${!checked}`);
+          onChange(!checked)}}
+        
+      /></label>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useState} from "react"
 import { InputSelect } from "./components/InputSelect"
 import { Instructions } from "./components/Instructions"
 import { Transactions } from "./components/Transactions"
@@ -13,7 +13,9 @@ export function App() {
   const { data: paginatedTransactions, ...paginatedTransactionsUtils } = usePaginatedTransactions()
   const { data: transactionsByEmployee, ...transactionsByEmployeeUtils } = useTransactionsByEmployee()
   const [isLoading, setIsLoading] = useState(false)
+  const [transactionStates, setTransactionStates] = useState({});
 
+  
   const transactions = useMemo(
     () => paginatedTransactions?.data ?? transactionsByEmployee ?? null,
     [paginatedTransactions, transactionsByEmployee]
@@ -24,10 +26,12 @@ export function App() {
     transactionsByEmployeeUtils.invalidateData()
 
     await employeeUtils.fetchAll()
-    await paginatedTransactionsUtils.fetchAll()
-
     setIsLoading(false)
+    await paginatedTransactionsUtils.fetchAll()
+    
+    
   }, [employeeUtils, paginatedTransactionsUtils, transactionsByEmployeeUtils])
+
 
   const loadTransactionsByEmployee = useCallback(
     async (employeeId: string) => {
@@ -37,19 +41,31 @@ export function App() {
     [paginatedTransactionsUtils, transactionsByEmployeeUtils]
   )
 
+  //
+  const handleTransactionToggle = useCallback(
+    (transactionId : string, newValue: boolean) => {
+      console.log(`Toggling transaction ${transactionId} to ${newValue}`);
+      setTransactionStates(prevState =>({
+        ...prevState,
+        [transactionId] :newValue,
+
+      }))
+    },
+    []
+  )
+  
   useEffect(() => {
     if (employees === null && !employeeUtils.loading) {
       loadAllTransactions()
     }
   }, [employeeUtils.loading, employees, loadAllTransactions])
 
+
   return (
     <Fragment>
       <main className="MainContainer">
         <Instructions />
-
         <hr className="RampBreak--l" />
-
         <InputSelect<Employee>
           isLoading={isLoading}
           defaultValue={EMPTY_EMPLOYEE}
@@ -64,20 +80,22 @@ export function App() {
             if (newValue === null) {
               return
             }
-
-            await loadTransactionsByEmployee(newValue.id)
+            if (newValue.id !== ""){
+              await loadTransactionsByEmployee(newValue.id);
+            } 
+            else {
+              await loadAllTransactions();
+            }
           }}
         />
 
         <div className="RampBreak--l" />
-
         <div className="RampGrid">
-          <Transactions transactions={transactions} />
-
+          <Transactions transactions={transactions} onToggle={handleTransactionToggle} transactionStates={transactionStates}/>
           {transactions !== null && (
             <button
               className="RampButton"
-              disabled={paginatedTransactionsUtils.loading}
+              disabled={paginatedTransactionsUtils.loading || paginatedTransactions?.nextPage == null}
               onClick={async () => {
                 await loadAllTransactions()
               }}
